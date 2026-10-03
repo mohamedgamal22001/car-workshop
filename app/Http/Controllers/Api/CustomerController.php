@@ -3,50 +3,102 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Customer\SearchCustomerRequest;
 use App\Http\Requests\Customer\StoreCustomerRequest;
 use App\Http\Requests\Customer\UpdateCustomerRequest;
+use App\Http\Resources\CustomerResource;
+use App\Http\Resources\VehicleResource;
 use App\Models\Customer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Symfony\Component\HttpFoundation\Response;
 
-class CustomerController extends Controller
+class CustomerController extends Controller implements HasMiddleware
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public static function middleware(): array
     {
-        // To be implemented by developer
+        return [
+            self::roleMiddleware('owner', 'front_desk'),
+        ];
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreCustomerRequest $request)
+    public function search(SearchCustomerRequest $request): JsonResponse
     {
-        // To be implemented by developer
+        $phone = $request->query('phone');
+
+        $customers = Customer::with('vehicles')
+            ->where('phone', 'like', "%{$phone}%")
+            ->get();
+
+        return $this->success(
+            CustomerResource::collection($customers),
+            'تم استرجاع بيانات العملاء بنجاح'
+        );
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Customer $customer)
+    public function index(Request $request): JsonResponse
     {
-        // To be implemented by developer
+        $search = $request->query('search');
+        $perPage = (int) $request->query('per_page', 20);
+        $perPage = min(max(1, $perPage), 100);
+
+        $query = Customer::with('vehicles');
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        $paginator = $query->latest()->paginate($perPage);
+
+        return $this->paginated(
+            $paginator,
+            CustomerResource::collection($paginator->items()),
+            'تم جلب قائمة العملاء بنجاح'
+        );
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateCustomerRequest $request, Customer $customer)
+    public function store(StoreCustomerRequest $request): JsonResponse
     {
-        // To be implemented by developer
+        $customer = Customer::create($request->validated());
+
+        return $this->success(
+            new CustomerResource($customer),
+            'تم إنشاء العميل بنجاح',
+            Response::HTTP_CREATED
+        );
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Customer $customer)
+    public function show(Customer $customer): JsonResponse
     {
-        // To be implemented by developer
+        $customer->load('vehicles');
+
+        return $this->success(
+            new CustomerResource($customer),
+            'تم جلب تفاصيل العميل'
+        );
+    }
+
+    public function update(UpdateCustomerRequest $request, Customer $customer): JsonResponse
+    {
+        $customer->update($request->validated());
+
+        return $this->success(
+            new CustomerResource($customer->fresh('vehicles')),
+            'تم تعديل بيانات العميل بنجاح'
+        );
+    }
+
+    public function vehicles(Customer $customer): JsonResponse
+    {
+        $vehicles = $customer->vehicles()->latest()->get();
+
+        return $this->success(
+            VehicleResource::collection($vehicles),
+            'تم جلب مركبات العميل بنجاح'
+        );
     }
 }

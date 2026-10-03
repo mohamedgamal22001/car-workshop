@@ -25,6 +25,7 @@ class User extends Authenticatable implements JWTSubject
         'phone',
         'password',
         'role',
+        'is_active',
     ];
 
     /**
@@ -37,6 +38,10 @@ class User extends Authenticatable implements JWTSubject
         'remember_token',
     ];
 
+    const ROLE_OWNER = 'owner';
+    const ROLE_FRONT_DESK = 'front_desk';
+    const ROLE_TECHNICIAN = 'technician';
+
     /**
      * Get the attributes that should be cast.
      *
@@ -47,7 +52,7 @@ class User extends Authenticatable implements JWTSubject
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'role' => \App\Enums\UserRole::class,
+            'is_active' => 'boolean',
         ];
     }
 
@@ -58,17 +63,17 @@ class User extends Authenticatable implements JWTSubject
 
     public function isOwner(): bool
     {
-        return $this->role === \App\Enums\UserRole::OWNER;
+        return $this->role === self::ROLE_OWNER;
     }
 
     public function isFrontDesk(): bool
     {
-        return $this->role === \App\Enums\UserRole::FRONT_DESK;
+        return $this->role === self::ROLE_FRONT_DESK;
     }
 
     public function isTechnician(): bool
     {
-        return $this->role === \App\Enums\UserRole::TECHNICIAN;
+        return $this->role === self::ROLE_TECHNICIAN;
     }
 
     public function getJWTIdentifier()
@@ -80,7 +85,7 @@ class User extends Authenticatable implements JWTSubject
     {
         return [
             'workshop_id' => $this->workshop_id,
-            'role' => $this->role?->value ?? $this->role,
+            'role' => $this->role,
         ];
     }
 }

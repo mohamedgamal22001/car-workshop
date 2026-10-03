@@ -4,7 +4,7 @@ namespace App\Http\Requests\Vehicle;
 
 use App\Http\Requests\BaseRequest;
 
-class UpdateVehicleRequest extends BaseRequest
+class SearchVehicleRequest extends BaseRequest
 {
     /**
      * Get the validation rules that apply to the request.
@@ -14,9 +14,7 @@ class UpdateVehicleRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'make' => 'sometimes|required|string|max:100',
-            'model' => 'sometimes|required|string|max:100',
-            'plate_number' => 'sometimes|required|string|max:50',
+            'plate' => 'required|string|max:50',
         ];
     }
 }

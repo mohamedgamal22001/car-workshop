@@ -14,7 +14,12 @@ class StoreJobOrderRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            //
+            'vehicle_id' => 'required|integer|exists:vehicles,id',
+            'description' => 'nullable|string',
+            'estimated_price' => 'nullable|numeric|min:0',
+            'labor_cost' => 'nullable|numeric|min:0',
+            'expected_delivery_date' => 'nullable|date',
+            'assigned_technician_id' => 'nullable|integer|exists:users,id',
         ];
     }
 }

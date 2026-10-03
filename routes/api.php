@@ -12,38 +12,51 @@ use App\Http\Controllers\Api\VehicleController;
 use App\Http\Controllers\Api\WorkshopController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-*/
+// Auth (Public)
+Route::post('auth/login', [AuthController::class, 'login'])
+    ->middleware('throttle:10,1')
+    ->name('auth.login');
 
-// Public Authentication Route
-Route::post('auth/login', [AuthController::class, 'login'])->name('auth.login');
-
-// Protected Routes (JWT Auth)
+// Protected Routes
 Route::middleware('auth:api')->group(function () {
     // Auth
     Route::get('auth/me', [AuthController::class, 'me'])->name('auth.me');
     Route::post('auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
     Route::post('auth/refresh', [AuthController::class, 'refresh'])->name('auth.refresh');
 
-    // Workshops & Users
-    Route::apiResource('workshops', WorkshopController::class);
-    Route::apiResource('users', UserController::class);
+    // Users
+    Route::get('users', [UserController::class, 'index'])->name('users.index');
+    Route::post('users', [UserController::class, 'store'])->name('users.store');
+    Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
+    Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
 
-    // Feature 1: استقبال العربية وأمر الشغل (Job Intake)
-    Route::apiResource('customers', CustomerController::class);
-    Route::apiResource('vehicles', VehicleController::class);
+    // Customers
+    Route::get('customers/search', [CustomerController::class, 'search'])->name('customers.search');
+    Route::get('customers/{customer}/vehicles', [CustomerController::class, 'vehicles'])->name('customers.vehicles');
+    Route::apiResource('customers', CustomerController::class)->except(['destroy']);
+
+    // Vehicles
+    Route::get('vehicles/search', [VehicleController::class, 'search'])->name('vehicles.search');
+    Route::apiResource('vehicles', VehicleController::class)->except(['index', 'destroy']);
+
+    // Workshops
+    Route::apiResource('workshops', WorkshopController::class);
+
+    // Job Orders
     Route::apiResource('job-orders', JobOrderController::class);
 
-    // Job Order Media (توثيق الصور قبل الشغل)
+    // Job Order Media
     Route::get('job-orders/{jobOrder}/media', [JobOrderMediaController::class, 'index'])->name('job-orders.media.index');
     Route::post('job-orders/{jobOrder}/media', [JobOrderMediaController::class, 'store'])->name('job-orders.media.store');
-    Route::delete('job-order-media/{media}', [JobOrderMediaController::class, 'destroy'])->name('job-orders.media.destroy');
+    Route::delete('job-orders/{jobOrder}/media/{media}', [JobOrderMediaController::class, 'destroy'])->name('job-orders.media.destroy');
+    Route::delete('job-order-media/{media}', [JobOrderMediaController::class, 'destroy']);
 
-    // Feature 2: تتبع سير العمل (Workflow / Job Status)
-    Route::patch('job-orders/{jobOrder}/status', [JobOrderStatusController::class, 'update'])->name('job-orders.status.update');
+    // Job Order Workflow
+    Route::patch('job-orders/{jobOrder}/assign-technician', JobOrderAssignController::class)->name('job-orders.assign-technician');
     Route::post('job-orders/{jobOrder}/assign', JobOrderAssignController::class)->name('job-orders.assign');
+    Route::patch('job-orders/{jobOrder}/status', [JobOrderStatusController::class, 'update'])->name('job-orders.status.update');
+    Route::post('job-orders/{jobOrder}/status-correction', [JobOrderStatusController::class, 'correct'])->name('job-orders.status.correction');
+    Route::get('job-orders/{jobOrder}/status-history', [JobOrderHistoryController::class, 'index'])->name('job-orders.status-history.index');
     Route::get('job-orders/{jobOrder}/history', [JobOrderHistoryController::class, 'index'])->name('job-orders.history.index');
 });
+

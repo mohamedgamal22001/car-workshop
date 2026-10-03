@@ -15,6 +15,7 @@ return new class extends Migration
             $table->foreignId('workshop_id')->nullable()->after('id')->constrained()->cascadeOnDelete();
             $table->string('phone')->nullable()->after('email');
             $table->string('role')->default('front_desk')->after('phone'); // owner, front_desk, technician
+            $table->boolean('is_active')->default(true)->after('role');
         });
     }
 
@@ -25,7 +26,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropForeign(['workshop_id']);
-            $table->dropColumn(['workshop_id', 'phone', 'role']);
+            $table->dropColumn(['workshop_id', 'phone', 'role', 'is_active']);
         });
     }
 };

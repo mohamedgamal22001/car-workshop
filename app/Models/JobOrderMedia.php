@@ -12,13 +12,18 @@ class JobOrderMedia extends Model
 
     protected $fillable = [
         'job_order_id',
-        'file_path',
-        'media_type',
-        'file_name',
+        'type',
+        'path',
+        'uploaded_by',
     ];
 
     public function jobOrder()
     {
         return $this->belongsTo(JobOrder::class);
+    }
+
+    public function uploader()
+    {
+        return $this->belongsTo(User::class, 'uploaded_by');
     }
 }

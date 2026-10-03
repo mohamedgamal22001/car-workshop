@@ -4,39 +4,89 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use Illuminate\Http\Request;
+use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Hash;
+use Symfony\Component\HttpFoundation\Response;
 
 class AuthController extends Controller
 {
-    /**
-     * Authenticate user and return JWT token.
-     */
-    public function login(LoginRequest $request)
+    public function login(LoginRequest $request): JsonResponse
     {
-        // To be implemented by developer
+        $loginInput = $request->input('login');
+        $email = $request->input('email');
+        $phone = $request->input('phone');
+        $password = $request->input('password');
+
+        $identifier = $loginInput ?? $email ?? $phone;
+
+        $user = User::where('email', $identifier)
+            ->orWhere('phone', $identifier)
+            ->first();
+
+        if (!$user || !Hash::check($password, $user->password)) {
+            return $this->error('Invalid credentials', Response::HTTP_UNAUTHORIZED, null, 'INVALID_CREDENTIALS');
+        }
+
+        if (!$user->is_active) {
+            return $this->error('Your account is deactivated.', Response::HTTP_FORBIDDEN, null, 'ACCOUNT_DEACTIVATED');
+        }
+
+        if (!$token = auth('api')->login($user)) {
+            return $this->error('Could not create token', Response::HTTP_INTERNAL_SERVER_ERROR, null, 'SERVER_ERROR');
+        }
+
+        return $this->success([
+            'token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => auth('api')->factory()->getTTL() * 60,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'role' => $user->role,
+                'workshop_id' => $user->workshop_id,
+                'is_active' => (bool)$user->is_active,
+            ],
+        ], 'Login successful');
     }
 
-    /**
-     * Get the authenticated User profile.
-     */
-    public function me()
+    public function me(): JsonResponse
     {
-        // To be implemented by developer
+        $user = auth()->user();
+
+        if (!$user) {
+            return $this->error('Unauthenticated', Response::HTTP_UNAUTHORIZED, null, 'UNAUTHENTICATED');
+        }
+
+        return $this->success([
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'role' => $user->role,
+            'workshop_id' => $user->workshop_id,
+            'is_active' => (bool)$user->is_active,
+        ], 'Current user profile');
     }
 
-    /**
-     * Log the user out (Invalidate the token).
-     */
-    public function logout()
+
+    public function logout(): JsonResponse
     {
-        // To be implemented by developer
+        auth('api')->logout();
+
+        return $this->success(null, 'Successfully logged out');
     }
 
-    /**
-     * Refresh a token.
-     */
-    public function refresh()
+    public function refresh(): JsonResponse
     {
-        // To be implemented by developer
+        $token = auth('api')->refresh();
+
+        return $this->success([
+            'token' => $token,
+            'token_type' => 'bearer',
+            'expires_in' => auth('api')->factory()->getTTL() * 60,
+        ], 'Token refreshed');
     }
 }

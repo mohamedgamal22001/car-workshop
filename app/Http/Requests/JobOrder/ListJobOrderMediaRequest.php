@@ -4,19 +4,18 @@ namespace App\Http\Requests\JobOrder;
 
 use App\Http\Requests\BaseRequest;
 
-class StoreJobOrderMediaRequest extends BaseRequest
+class ListJobOrderMediaRequest extends BaseRequest
 {
     /**
      * Get the validation rules that apply to the request.
-     * Document 3 Section 3.6 & 5: Upload a photo (multipart: file, type: before_work / after_work).
+     * Document 3 Section 5: List media, optional ?type= (before_work / after_work).
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            'file' => 'required|image|mimes:jpeg,png,jpg,webp|max:10240', // 10MB max
-            'type' => 'required|string|in:before_work,after_work',
+            'type' => 'nullable|string|in:before_work,after_work',
         ];
     }
 }

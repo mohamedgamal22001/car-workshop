@@ -3,50 +3,84 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Vehicle\SearchVehicleRequest;
 use App\Http\Requests\Vehicle\StoreVehicleRequest;
 use App\Http\Requests\Vehicle\UpdateVehicleRequest;
+use App\Http\Resources\VehicleResource;
+use App\Models\Customer;
 use App\Models\Vehicle;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Symfony\Component\HttpFoundation\Response;
 
-class VehicleController extends Controller
+class VehicleController extends Controller implements HasMiddleware
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public static function middleware(): array
     {
-        // To be implemented by developer
+        return [
+            self::roleMiddleware('owner', 'front_desk'),
+        ];
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreVehicleRequest $request)
+    public function search(SearchVehicleRequest $request): JsonResponse
     {
-        // To be implemented by developer
+        $plate = $request->query('plate');
+
+        $vehicle = Vehicle::with('customer')
+            ->where('plate_number', $plate)
+            ->first();
+
+        if (!$vehicle) {
+            return $this->success(null, 'لا توجد مركبة سابقة مسجلة بهذا الرقم في هذه الورشة');
+        }
+
+        return $this->success(
+            new VehicleResource($vehicle),
+            'تنبيه: توجد مركبة سابقة مسجلة بنفس رقم اللوحة في هذه الورشة'
+        );
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Vehicle $vehicle)
+    public function store(StoreVehicleRequest $request): JsonResponse
     {
-        // To be implemented by developer
+        $data = $request->validated();
+
+        $customer = Customer::find($data['customer_id']);
+        if (!$customer) {
+            return $this->error(
+                'العميل المختار غير موجود في هذه الورشة',
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+                ['customer_id' => ['العميل المختار غير صحيح']],
+                'VALIDATION_ERROR'
+            );
+        }
+
+        $vehicle = Vehicle::create($data);
+
+        return $this->success(
+            new VehicleResource($vehicle),
+            'تمت إضافة المركبة بنجاح',
+            Response::HTTP_CREATED
+        );
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateVehicleRequest $request, Vehicle $vehicle)
+    public function show(Vehicle $vehicle): JsonResponse
     {
-        // To be implemented by developer
+        $vehicle->load('customer');
+
+        return $this->success(
+            new VehicleResource($vehicle),
+            'تم استرجاع تفاصيل المركبة بنجاح'
+        );
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Vehicle $vehicle)
+    public function update(UpdateVehicleRequest $request, Vehicle $vehicle): JsonResponse
     {
-        // To be implemented by developer
+        $vehicle->update($request->validated());
+
+        return $this->success(
+            new VehicleResource($vehicle->fresh('customer')),
+            'تم تعديل بيانات المركبة بنجاح'
+        );
     }
 }

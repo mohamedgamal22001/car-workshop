@@ -3,48 +3,42 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Workshop\UpdateWorkshopRequest;
 use App\Models\Workshop;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Symfony\Component\HttpFoundation\Response;
 
-class WorkshopController extends Controller
+class WorkshopController extends Controller implements HasMiddleware
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public static function middleware(): array
     {
-        // To be implemented by developer
+        return [
+            self::roleMiddleware('owner'),
+        ];
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function show(Workshop $workshop): JsonResponse
     {
-        // To be implemented by developer
+        $currentUser = auth()->user();
+
+        if ($workshop->id !== $currentUser->workshop_id) {
+            return $this->error('Record missing or belongs to another workshop', Response::HTTP_NOT_FOUND, null, 'NOT_FOUND');
+        }
+
+        return $this->success($workshop, 'Workshop details retrieved successfully');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Workshop $workshop)
+    public function update(UpdateWorkshopRequest $request, Workshop $workshop): JsonResponse
     {
-        // To be implemented by developer
-    }
+        $currentUser = auth()->user();
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Workshop $workshop)
-    {
-        // To be implemented by developer
-    }
+        if ($workshop->id !== $currentUser->workshop_id) {
+            return $this->error('Record missing or belongs to another workshop', Response::HTTP_NOT_FOUND, null, 'NOT_FOUND');
+        }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Workshop $workshop)
-    {
-        // To be implemented by developer
+        $workshop->update($request->validated());
+
+        return $this->success($workshop, 'Workshop updated successfully');
     }
 }

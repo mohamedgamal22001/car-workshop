@@ -13,13 +13,15 @@ return new class extends Migration
     {
         Schema::create('vehicles', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('workshop_id')->constrained()->cascadeOnDelete();
             $table->foreignId('customer_id')->constrained()->cascadeOnDelete();
-            $table->string('make'); // نوع العربية مثل تويوتا، هيونداي
-            $table->string('model'); // موديل مثل كورولا، إلنترا
+            $table->string('make'); // نوع العربية
+            $table->string('model'); // موديل
             $table->string('plate_number'); // رقم اللوحة
             $table->timestamps();
 
-            $table->index(['customer_id', 'plate_number']);
+            $table->index(['workshop_id', 'plate_number']);
+            $table->index('customer_id');
         });
     }
 

@@ -26,6 +26,7 @@ class BaseRequest extends FormRequest
     {
         throw new HttpResponseException(response()->json([
             'success' => false,
+            'code' => 'VALIDATION_ERROR',
             'message' => 'Validation error',
             'errors' => $validator->errors(),
         ], Response::HTTP_UNPROCESSABLE_ENTITY));

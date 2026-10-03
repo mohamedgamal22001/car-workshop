@@ -14,7 +14,10 @@ class StoreVehicleRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            //
+            'customer_id' => 'required|integer|exists:customers,id',
+            'make' => 'required|string|max:100',
+            'model' => 'required|string|max:100',
+            'plate_number' => 'required|string|max:50',
         ];
     }
 }

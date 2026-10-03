@@ -14,10 +14,11 @@ return new class extends Migration
         Schema::create('job_order_status_histories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('job_order_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('changed_by_user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('from_status')->nullable();
             $table->string('to_status');
-            $table->text('notes')->nullable();
+            $table->foreignId('changed_by_user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->boolean('is_correction')->default(false);
+            $table->text('note')->nullable();
             $table->timestamps();
 
             $table->index(['job_order_id', 'created_at']);

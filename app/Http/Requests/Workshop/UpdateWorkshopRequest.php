@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Vehicle;
+namespace App\Http\Requests\Workshop;
 
 use App\Http\Requests\BaseRequest;
 
-class UpdateVehicleRequest extends BaseRequest
+class UpdateWorkshopRequest extends BaseRequest
 {
     /**
      * Get the validation rules that apply to the request.
@@ -14,9 +14,8 @@ class UpdateVehicleRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'make' => 'sometimes|required|string|max:100',
-            'model' => 'sometimes|required|string|max:100',
-            'plate_number' => 'sometimes|required|string|max:50',
+            'name' => 'sometimes|required|string|max:255',
+            'owner_phone' => 'sometimes|required|string|max:50',
         ];
     }
 }

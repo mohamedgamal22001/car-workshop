@@ -12,11 +12,19 @@ class JobOrderStatusHistory extends Model
 
     protected $fillable = [
         'job_order_id',
-        'changed_by_user_id',
         'from_status',
         'to_status',
-        'notes',
+        'changed_by_user_id',
+        'is_correction',
+        'note',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_correction' => 'boolean',
+        ];
+    }
 
     public function jobOrder()
     {

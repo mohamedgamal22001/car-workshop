@@ -14,12 +14,12 @@ return new class extends Migration
         Schema::create('job_order_media', function (Blueprint $table) {
             $table->id();
             $table->foreignId('job_order_id')->constrained()->cascadeOnDelete();
-            $table->string('file_path');
-            $table->string('media_type')->default('before'); // 'before', 'after'
-            $table->string('file_name')->nullable();
+            $table->string('type')->default('before_work'); // before_work, after_work
+            $table->string('path'); // storage path of the file
+            $table->foreignId('uploaded_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
 
-            $table->index(['job_order_id', 'media_type']);
+            $table->index(['job_order_id', 'type']);
         });
     }
 

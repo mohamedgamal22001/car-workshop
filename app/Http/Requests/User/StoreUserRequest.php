@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests\Customer;
+namespace App\Http\Requests\User;
 
 use App\Http\Requests\BaseRequest;
 
-class StoreCustomerRequest extends BaseRequest
+class StoreUserRequest extends BaseRequest
 {
     /**
      * Get the validation rules that apply to the request.
@@ -15,7 +15,10 @@ class StoreCustomerRequest extends BaseRequest
     {
         return [
             'name' => 'required|string|max:255',
+            'email' => 'nullable|email|max:255|unique:users,email',
             'phone' => 'required|string|max:50',
+            'password' => 'required|string|min:6',
+            'role' => 'required|string|in:front_desk,technician',
         ];
     }
 }
